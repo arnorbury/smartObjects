@@ -1,0 +1,215 @@
+#include <Wire.h>
+#include <Adafruit_Sensor.h>
+#include <Adafruit_ADXL345.h>
+#include <LPD8806.h>
+#include <SPI.h>
+
+/* Assign a unique ID to this sensor at the same time */
+Adafruit_ADXL345 accel = Adafruit_ADXL345(12345);
+
+int a1 = 0;
+int accldiffctr = 0;
+int lightctr = -1;
+int plightctr = 0;
+
+int nLEDs = 12;
+int dataPin = 7;
+int clockPin = 12;
+
+int myReds [12] = {255,255,255,255,255,225,150,80,63,0, 0, 0};
+int myGreens [12] = {0,0,15,30,80,100,150,200,255,255,255,255};
+
+//int myReds [10] = {255,255,255,255,255,200,189,126,63,0};
+//int myGreens [10] = {0,0,63,126,189,200,220,255,255,255};  
+
+LPD8806 strip = LPD8806(nLEDs, dataPin, clockPin);
+//
+//int myReds[11] = {255};
+//int myGreens[11] = {0};
+
+void displaySensorDetails(void)
+{
+  sensor_t sensor;
+  accel.getSensor(&sensor);
+  Serial.println("------------------------------------");
+  Serial.print  ("Sensor:       "); Serial.println(sensor.name);
+  Serial.print  ("Driver Ver:   "); Serial.println(sensor.version);
+  Serial.print  ("Unique ID:    "); Serial.println(sensor.sensor_id);
+  Serial.print  ("Max Value:    "); Serial.print(sensor.max_value); Serial.println(" m/s^2");
+  Serial.print  ("Min Value:    "); Serial.print(sensor.min_value); Serial.println(" m/s^2");
+  Serial.print  ("Resolution:   "); Serial.print(sensor.resolution); Serial.println(" m/s^2");  
+  Serial.println("------------------------------------");
+  Serial.println("");
+  delay(500);
+}
+
+void displayDataRate(void)
+{
+  Serial.print  ("Data Rate:    "); 
+  
+  switch(accel.getDataRate())
+  {
+    case ADXL345_DATARATE_3200_HZ:
+      Serial.print  ("3200 "); 
+      break;
+    case ADXL345_DATARATE_1600_HZ:
+      Serial.print  ("1600 "); 
+      break;
+    case ADXL345_DATARATE_800_HZ:
+      Serial.print  ("800 "); 
+      break;
+    case ADXL345_DATARATE_400_HZ:
+      Serial.print  ("400 "); 
+      break;
+    case ADXL345_DATARATE_200_HZ:
+      Serial.print  ("200 "); 
+      break;
+    case ADXL345_DATARATE_100_HZ:
+      Serial.print  ("100 "); 
+      break;
+    case ADXL345_DATARATE_50_HZ:
+      Serial.print  ("50 "); 
+      break;
+    case ADXL345_DATARATE_25_HZ:
+      Serial.print  ("25 "); 
+      break;
+    case ADXL345_DATARATE_12_5_HZ:
+      Serial.print  ("12.5 "); 
+      break;
+    case ADXL345_DATARATE_6_25HZ:
+      Serial.print  ("6.25 "); 
+      break;
+    case ADXL345_DATARATE_3_13_HZ:
+      Serial.print  ("3.13 "); 
+      break;
+    case ADXL345_DATARATE_1_56_HZ:
+      Serial.print  ("1.56 "); 
+      break;
+    case ADXL345_DATARATE_0_78_HZ:
+      Serial.print  ("0.78 "); 
+      break;
+    case ADXL345_DATARATE_0_39_HZ:
+      Serial.print  ("0.39 "); 
+      break;
+    case ADXL345_DATARATE_0_20_HZ:
+      Serial.print  ("0.20 "); 
+      break;
+    case ADXL345_DATARATE_0_10_HZ:
+      Serial.print  ("0.10 "); 
+      break;
+    default:
+      Serial.print  ("???? "); 
+      break;
+  }  
+  Serial.println(" Hz");  
+}
+
+void displayRange(void)
+{
+  Serial.print  ("Range:         +/- "); 
+  
+  switch(accel.getRange())
+  {
+    case ADXL345_RANGE_16_G:
+      Serial.print  ("16 "); 
+      break;
+    case ADXL345_RANGE_8_G:
+      Serial.print  ("8 "); 
+      break;
+    case ADXL345_RANGE_4_G:
+      Serial.print  ("4 "); 
+      break;
+    case ADXL345_RANGE_2_G:
+      Serial.print  ("2 "); 
+      break;
+    default:
+      Serial.print  ("?? "); 
+      break;
+  }  
+  Serial.println(" g");  
+}
+
+void setup() 
+{
+  Serial.begin(9600);
+  Serial.println("Accelerometer Test"); Serial.println("");
+  
+//  for (int i = 1; i < nLEDs; i++) {
+//    myReds[i] = myReds[i-1] - round(255/nLEDs);
+//    myGreens[i] = myReds[i-1] + round(255/nLEDs);
+//  }
+  
+  /* Initialise the sensor */
+  if(!accel.begin())
+  {
+    /* There was a problem detecting the ADXL345 ... check your connections */
+    Serial.println("Ooops, no ADXL345 detected ... Check your wiring!");
+    while(1);
+  }
+  
+  /* Display some basic information on this sensor */
+  displaySensorDetails();
+  
+  /* Display additional settings (outside the scope of sensor_t) */
+  displayDataRate();
+  displayRange();
+  Serial.println("");
+  
+  strip.begin();
+  strip.show();
+}
+
+void loop(void) 
+{
+  /* Get a new sensor event */ 
+  sensors_event_t event; 
+  accel.getEvent(&event);
+  
+ 
+  // Display the results (acceleration is measured in m/s^2) */
+  Serial.print("X: "); Serial.print(event.acceleration.x); Serial.print("  ");
+  Serial.print("Y: "); Serial.print(event.acceleration.y); Serial.print("  ");
+  Serial.print("Z: "); Serial.print(event.acceleration.z); Serial.print("  ");Serial.println("m/s^2 ");
+  //delay(500);
+  
+    
+    int a2 = round(sqrt(pow((event.acceleration.x),2)+pow((event.acceleration.y),2)+pow((event.acceleration.z),2)));
+    //Serial.print("a2: "); Serial.println(a2);
+  
+  if (accldiffctr < 500) {
+    accldiffctr = accldiffctr + abs (a2 - a1);
+     Serial.print("adiff: "); Serial.println(accldiffctr);
+  }
+  else {
+    lightctr++;
+    Serial.print("lightctr: "); Serial.println(lightctr);
+    
+    accldiffctr = 0;
+  }
+  
+  //Serial.println(accldiffctr);
+  
+ if (lightctr <= nLEDs) {
+    strip.setPixelColor(lightctr, strip.Color(myReds[lightctr], myGreens[lightctr], 0));
+    //strip.setPixelColor(lightctr, strip.Color(0, 0, 255));
+    strip.show();
+  }
+//  if (lightctr > nLEDs) {
+//    lightctr = 0;
+//    for (int i = 0; i <= nLEDs; i++) {
+//    strip.setPixelColor(i, strip.Color(0, 0, 0));
+//    strip.show();
+//  }
+//  else if (lightctr > 10 && lightctr <=18) {
+//    strip.setPixelColor(lightctr, strip.Color(0, 255, 0));
+//    strip.show();
+//  }
+//  else if (lightctr > 10 && lightctr <=18) {
+//    strip.setPixelColor(lightctr, strip.Color(0, 0, 255));
+//    strip.show();
+//  }
+  
+  a1 = a2;
+  
+}
+//}
